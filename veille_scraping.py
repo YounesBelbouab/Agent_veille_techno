@@ -21,7 +21,7 @@ def call_api_articles(sujet, langue, jour, nb_articles):
         f"q={query}&"
         f"from={date}&"
         f"sortBy=publishedAt&"
-        f"language={langue}&"
+        f"language={langue.lower()}&"
         f"pageSize={nb_articles}&" 
         f"apiKey={api_key}"      
     )

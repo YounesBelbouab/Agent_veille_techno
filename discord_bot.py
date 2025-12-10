@@ -40,8 +40,8 @@ class DiscordBot(discord.Client):
             nombre_article="Nombre d'articles à récupérer"
         )
         @app_commands.choices(langue=[
-            app_commands.Choice(name="Français", value="FR"),
-            app_commands.Choice(name="English", value="EN")
+            app_commands.Choice(name="Français", value="fr"),
+            app_commands.Choice(name="English", value="en")
         ])
         async def ask_veille(
             interaction: discord.Interaction, 
