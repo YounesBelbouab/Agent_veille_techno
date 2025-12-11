@@ -5,3 +5,4 @@ tldextract
 groq
 discord.py
 python-dotenv
+lxml_html_clean
