@@ -4,6 +4,8 @@ import json
 import re
 import datetime
 import asyncio
+
+from aiohttp import web
 from discord import app_commands
 from dotenv import load_dotenv
 from bigquery_utils import insert_config_to_bigquery
@@ -229,8 +231,28 @@ class DiscordBot(discord.Client):
                 # On envoie l'erreur s'il y en a une
                 await interaction.followup.send(f"❌ Erreur critique batch : {e}")
 
+
         await self.tree.sync()
         print("Commandes synchronisees.")
+        self.loop.create_task(self.start_web_server())
+
+    async def trigger_cron_handler(self, request):
+            print("Cron activé! Lancement du batch...")
+            asyncio.create_task(run_batch(bot_client=self))
+            return web.Response(text="Batch démarré avec succès !")
+    
+    async def start_web_server(self):
+        app = web.Application()
+        app.router.add_get('/trigger_veille', self.trigger_cron_handler)
+        
+        runner = web.AppRunner(app)
+        await runner.setup()
+
+        port = int(os.environ.get("PORT", 8080))
+        
+        site = web.TCPSite(runner, '0.0.0.0', port)
+        await site.start()
+        print(f"Serveur Web de veille démarré sur le port {port}")
 
     async def on_ready(self):
         print(f'Connecte : {self.user}')
@@ -239,7 +261,6 @@ class DiscordBot(discord.Client):
 if __name__ == "__main__":
     load_dotenv()
     discord_token = os.getenv('DISCORD_TOKEN')
-
     if not discord_token:
         print("Erreur token")
     else:

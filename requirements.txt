@@ -8,3 +8,4 @@ google-cloud-bigquery
 google-cloud-secret-manager
 lxml_html_clean
 asyncio
+aiohttp
