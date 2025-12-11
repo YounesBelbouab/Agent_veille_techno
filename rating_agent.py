@@ -141,7 +141,7 @@ class SortAgent:
         sorted_list = sorted(processed_articles, key=lambda x: x['relevance_score'], reverse=True)
 
         final_selection = sorted_list[:top_k]
-
+        print(final_selection)
         print(f"SortAgent : {len(final_selection)} articles qualifies retenus sur {len(raw_articles)}.")
         return final_selection
 

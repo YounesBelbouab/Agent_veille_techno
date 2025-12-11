@@ -112,6 +112,26 @@ class DiscordBot(discord.Client):
         await self.tree.sync()
         print("Commandes synchronisees.")
 
+        # --- Commande /subscribe_newsletter ---
+        @self.tree.command(name="subscribe_newsletter", description="S'abonner à la newsletter en indiquant son email")
+        @app_commands.describe(email="Votre adresse email pour recevoir la newsletter")
+        async def subscribe_newsletter(interaction: discord.Interaction, email: str):
+            await interaction.response.defer(ephemeral=True)
+            try:
+                fichier_email = "adresses_mail.txt"
+                emails_existants = set()
+                if os.path.exists(fichier_email):
+                    with open(fichier_email, "r", encoding="utf-8") as f:
+                        emails_existants = set(l.strip() for l in f.readlines())
+                if email in emails_existants:
+                    await interaction.followup.send("⚠️ Cette adresse est déjà inscrite à la newsletter.")
+                    return
+                with open(fichier_email, "a", encoding="utf-8") as f:
+                    f.write(email + "\n")
+                await interaction.followup.send(f"✅ Adresse {email} ajoutée à la newsletter !")
+            except Exception as e:
+                await interaction.followup.send(f"❌ Une erreur est survenue : {e}")
+
     async def on_ready(self):
         print(f'Connecte : {self.user}')
 
