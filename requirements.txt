@@ -2,6 +2,8 @@ requests
 trafilatura
 python-dotenv
 tldextract
-json
 groq
-discord
+discord.py
+google-cloud-bigquery
+google-cloud-secret-manager
+lxml_html_clean
