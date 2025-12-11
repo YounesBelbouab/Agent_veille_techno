@@ -6,15 +6,13 @@ import os
 class ConversationAgent:
     def __init__(self):
         load_dotenv()
-        self.client = Groq(api_key=os.environ["GROQ_KEY"])
+        self.client = Groq(api_key=os.getenv("GROQ_API_KEY"))
         self.initiate_history()
-
 
     @staticmethod
     def read_file(file_path):
-        with open(file_path , "r") as file:
+        with open(file_path, "r", encoding="utf-8") as file:
             return file.read()
-
 
     def initiate_history(self):
         self.history = [
@@ -23,29 +21,24 @@ class ConversationAgent:
                 "content": ConversationAgent.read_file("./context.txt")
             }]
 
-
     def update_history(self, role, content):
-         self.history.append(
-                {
-                    "role": role,
-                    "content": content,
-                })
-
+        self.history.append(
+            {
+                "role": role,
+                "content": content,
+            })
 
     def ask_llm(self, user_interaction, model):
-
         self.update_history(role="user", content=user_interaction)
 
         response = self.client.chat.completions.create(
             messages=self.history,
             model=model
         ).choices[0].message.content
-        
+
         self.update_history(role="assistant", content=response)
 
         return response
-
-
 
     def terminal_user_interface(self, model):
         while True:
@@ -53,15 +46,12 @@ class ConversationAgent:
             if user_interaction.lower() == "exit":
                 break
             elif user_interaction == "":
-                print("Jarvis : Vous n'avez rien à dire ?")
+                print("...")
             else:
                 response = self.ask_llm(user_interaction=user_interaction, model=model)
                 print(f"Jarvis : {response}")
 
 
-
-
-
 if __name__ == "__main__":
     conversation_agent = ConversationAgent()
-    conversation_agent.terminal_user_interface(model="openai/gpt-oss-120b")
+    conversation_agent.terminal_user_interface(model="llama-3.3-70b-versatile")
