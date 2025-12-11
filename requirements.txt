@@ -2,3 +2,6 @@ requests
 trafilatura
 python-dotenv
 tldextract
+json
+groq
+discord
