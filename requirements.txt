@@ -4,3 +4,4 @@ python-dotenv
 tldextract
 groq
 discord.py
+python-dotenv
