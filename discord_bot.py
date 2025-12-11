@@ -2,12 +2,14 @@ import os
 import discord
 import json
 import re
+import datetime
+import asyncio
 from discord import app_commands
 from dotenv import load_dotenv
 from bigquery_utils import insert_config_to_bigquery
-
 from veille_scraping import call_api_articles
 from conversation_agent import ConversationAgent
+from batch_runner import run_batch
 
 MODEL_ID = "llama-3.3-70b-versatile"
 
@@ -18,6 +20,25 @@ class DiscordBot(discord.Client):
         super().__init__(intents=intents)
         self.conversation_agent = conversation_agent
         self.tree = app_commands.CommandTree(self)
+
+    async def send_veille_discord(self, user_id, veille_user):
+        TARGET_CHANNEL_ID = 1448667313921331252
+        target_channel = self.get_channel(TARGET_CHANNEL_ID)
+
+        if target_channel is None:
+            print(f"Erreur channel {TARGET_CHANNEL_ID}")
+            return
+
+        try:
+            date_str = datetime.datetime.now().strftime("%d/%m/%Y")
+            thread = await target_channel.create_thread(
+                name=f"Veille de {user_id} du {date_str}",
+                type=discord.ChannelType.public_thread,
+                auto_archive_duration=60
+            )
+            await thread.send(f"Hey <@{user_id}> voici ta veille du {date_str} ! \n\n{veille_user}")
+        except Exception as e:
+            print(f"Erreur envoi veille : {e}")
 
     async def setup_hook(self):
         @self.tree.command(name="ask", description="Pose une question à Jarvis")
@@ -39,8 +60,8 @@ class DiscordBot(discord.Client):
         @app_commands.describe(
             sujet_veille="Sujet",
             langue="Langue",
-            jour="Jours (Max 30)",
-            nombre_article="Nombre (Max 50)"
+            jour="Jours",
+            nombre_article="Nombre"
         )
         @app_commands.choices(langue=[
             app_commands.Choice(name="Français", value="fr"),
@@ -53,33 +74,20 @@ class DiscordBot(discord.Client):
                 jour: int,
                 nombre_article: int
         ):
-
             if jour > 30:
-                await interaction.response.send_message(
-                    "Erreur Temporelle: Impossible de remonter plus de 30 jours en arrière (Limite API).",
-                    ephemeral=True
-                )
+                await interaction.response.send_message("Erreur Temporelle", ephemeral=True)
                 return
 
             if jour < 1:
-                await interaction.response.send_message(
-                    "Erreur: Le nombre de jours doit être au moins 1.",
-                    ephemeral=True
-                )
+                await interaction.response.send_message("Erreur Jours", ephemeral=True)
                 return
 
             if nombre_article > 50:
-                await interaction.response.send_message(
-                    "Surcharge : Je ne traite pas plus de 50 articles à la fois. Réduis ta demande.",
-                    ephemeral=True
-                )
+                await interaction.response.send_message("Surcharge", ephemeral=True)
                 return
 
             if nombre_article < 1:
-                await interaction.response.send_message(
-                    "Erreur: Il me faut au moins 1 article.",
-                    ephemeral=True
-                )
+                await interaction.response.send_message("Erreur Articles", ephemeral=True)
                 return
 
             await interaction.response.defer()
@@ -94,15 +102,15 @@ class DiscordBot(discord.Client):
                     try:
                         articles_raw = json.loads(articles_raw)
                     except json.JSONDecodeError:
-                        await interaction.followup.send(f"Erreur format donnees : {articles_raw[:1000]}")
+                        await interaction.followup.send(f"Erreur format JSON")
                         return
 
                 if not isinstance(articles_raw, list):
-                    await interaction.followup.send("Erreur : Format de liste invalide")
+                    await interaction.followup.send("Erreur Format Liste")
                     return
 
                 if not articles_raw:
-                    await interaction.followup.send("Aucun article trouve.")
+                    await interaction.followup.send("Aucun article.")
                     return
 
                 for article in articles_raw:
@@ -135,44 +143,35 @@ class DiscordBot(discord.Client):
                 await interaction.channel.send("Veille terminee.")
 
             except Exception as e:
-                await interaction.followup.send(f"Erreur critique : {str(e)}")
+                await interaction.followup.send(f"Erreur : {str(e)}")
 
-        # --- Commande /config_veille ---
-        @self.tree.command(name="config_veille", description="Configure tes préférences de veille")
+        @self.tree.command(name="config_veille", description="Configure tes préférences de veille auto")
         @app_commands.describe(
-            email="Ton adresse email pour les rapports",
-            sujet="Le sujet principal de ta veille",
-            langue="Langue des articles",
-            periode="Période de recherche (jours)",
-            nb_articles="Nombre d'articles à analyser"
+            email="Email",
+            sujet="Sujet",
+            langue="Langue",
+            periode="Jours",
+            nb_articles="Nombre"
         )
         @app_commands.choices(langue=[
             app_commands.Choice(name="Français", value="fr"),
             app_commands.Choice(name="English", value="en")
         ])
         async def config_veille(
-            interaction: discord.Interaction,
-            email: str,
-            sujet: str,
-            langue: app_commands.Choice[str],
-            periode: int,
-            nb_articles: int,
+                interaction: discord.Interaction,
+                email: str,
+                sujet: str,
+                langue: app_commands.Choice[str],
+                periode: int,
+                nb_articles: int,
         ):
-            # 1. Validation email
             email_pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
             if not re.match(email_pattern, email):
-                await interaction.response.send_message(
-                    "❌ Adresse email invalide. Elle doit contenir un '@' et un domaine (ex: .com).", 
-                    ephemeral=True
-                )
+                await interaction.response.send_message("Email invalide.", ephemeral=True)
                 return
 
-            # Sécurité valeur entrée
             if periode < 1 or nb_articles < 1:
-                await interaction.response.send_message(
-                    "❌ Le nombre de jours et d'articles doit être supérieur à 0.", 
-                    ephemeral=True
-                )
+                await interaction.response.send_message("Valeurs positives requises.", ephemeral=True)
                 return
 
             await interaction.response.defer(ephemeral=True)
@@ -187,16 +186,26 @@ class DiscordBot(discord.Client):
                     "nb_articles": nb_articles,
                 }
 
-                insert_config_to_bigquery(user_data) 
+                insert_config_to_bigquery(user_data)
 
                 await interaction.followup.send(
-                    f"✅ Configuration sauvegardée pour **{sujet}** ({langue.name}) !\n"
-                    f"Rapports envoyés à : `{email}`"
+                    f"Config sauvegardee pour **{sujet}** ({langue.name}) !\n"
+                    f"Rapports envoyes a : `{email}`"
                 )
 
             except Exception as e:
-                print(f"Erreur BQ: {e}")
-                await interaction.followup.send(f"❌ Erreur lors de la sauvegarde : {str(e)}")
+                await interaction.followup.send(f"Erreur sauvegarde : {str(e)}")
+
+        @self.tree.command(name="run_veille_automation", description="Lancer manuellement le batch de veille")
+        async def run_veille_automation(interaction: discord.Interaction):
+            await interaction.response.defer()
+            await interaction.followup.send("Demarrage du Batch Automation...")
+
+            try:
+                await asyncio.to_thread(run_batch)
+                await interaction.followup.send("Batch Automation termine.")
+            except Exception as e:
+                await interaction.followup.send(f"Erreur batch : {e}")
 
         await self.tree.sync()
         print("Commandes synchronisees.")
