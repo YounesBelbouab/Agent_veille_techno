@@ -26,19 +26,37 @@ class DiscordBot(discord.Client):
         target_channel = self.get_channel(TARGET_CHANNEL_ID)
 
         if target_channel is None:
-            print(f"Erreur channel {TARGET_CHANNEL_ID}")
+            print(f"❌ Erreur : Impossible de trouver le salon {TARGET_CHANNEL_ID}")
             return
 
         try:
+            try:
+                user_obj = await self.fetch_user(int(user_id))
+                user_name = user_obj.name
+            except:
+                user_name = user_id 
+
             date_str = datetime.datetime.now().strftime("%d/%m/%Y")
+            
             thread = await target_channel.create_thread(
-                name=f"Veille de {user_id} du {date_str}",
+                name=f"Veille de {user_name} du {date_str}",
                 type=discord.ChannelType.public_thread,
                 auto_archive_duration=60
             )
-            await thread.send(f"Hey <@{user_id}> voici ta veille du {date_str} ! \n\n{veille_user}")
+
+            full_message = f"Hey <@{user_id}> voici ta veille du {date_str} ! \n\n{veille_user}"
+
+            if len(full_message) <= 2000:
+                await thread.send(full_message)
+            else:
+                chunks = [full_message[i:i+1900] for i in range(0, len(full_message), 1900)]
+                for chunk in chunks:
+                    await thread.send(chunk)
+            
+            print(f"✅ Veille envoyée avec succès dans le thread '{thread.name}'")
+
         except Exception as e:
-            print(f"Erreur envoi veille : {e}")
+            print(f"❌ Erreur critique lors de l'envoi de la veille : {e}")
 
     async def setup_hook(self):
         @self.tree.command(name="ask", description="Pose une question à Jarvis")
@@ -198,14 +216,18 @@ class DiscordBot(discord.Client):
 
         @self.tree.command(name="run_veille_automation", description="Lancer manuellement le batch de veille")
         async def run_veille_automation(interaction: discord.Interaction):
+            # 1. On dit à Discord de patienter (car le batch peut prendre 5 min)
             await interaction.response.defer()
-            await interaction.followup.send("Demarrage du Batch Automation...")
+            await interaction.followup.send("🚀 Démarrage du Batch Automation en cours...")
 
             try:
-                await asyncio.to_thread(run_batch)
-                await interaction.followup.send("Batch Automation termine.")
+                await run_batch(bot_client=self)
+                
+                await interaction.followup.send("✅ Batch Automation terminé avec succès.")
+                
             except Exception as e:
-                await interaction.followup.send(f"Erreur batch : {e}")
+                # On envoie l'erreur s'il y en a une
+                await interaction.followup.send(f"❌ Erreur critique batch : {e}")
 
         await self.tree.sync()
         print("Commandes synchronisees.")
