@@ -46,24 +46,35 @@ class SortAgent:
         query_string = " OR ".join([f'"{k.strip()}"' for k in keywords_list])
         query_formatted = query_string.replace(" ", "%20").replace('"', '%22')
 
-        url = (
-            f"https://newsapi.org/v2/everything?"
-            f"q={query_formatted}&"
-            f"from={date_from}&"
-            f"sortBy=publishedAt&"
-            f"language={lang}&"
-            f"pageSize={max_results}&"
-            f"apiKey={self.api_key}"
-        )
+        target_languages = {lang, "en"}
 
-        try:
-            response = requests.get(url)
-            response.raise_for_status()
-            data = response.json()
-            return data.get("articles", [])
-        except Exception as e:
-            print(f"Erreur API : {e}")
-            return []
+        all_articles = []
+
+        print(f"SortAgent : Recherche API sur les langues {target_languages}...")
+
+        for l in target_languages:
+            url = (
+                f"https://newsapi.org/v2/everything?"
+                f"q={query_formatted}&"
+                f"from={date_from}&"
+                f"sortBy=publishedAt&"
+                f"language={l}&"
+                f"pageSize={max_results}&"
+                f"apiKey={self.api_key}"
+            )
+
+            try:
+                response = requests.get(url)
+                if response.status_code == 200:
+                    data = response.json()
+                    articles = data.get("articles", [])
+                    all_articles.extend(articles)
+            except Exception as e:
+                print(f"Erreur API pour la langue {l} : {e}")
+
+        unique_articles = {art['url']: art for art in all_articles}.values()
+
+        return list(unique_articles)
 
     def pertinence_score_calcul(self, article, content, keywords_list, vocab_tech=None):
         score = 0

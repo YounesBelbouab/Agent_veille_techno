@@ -36,8 +36,8 @@ class DiscordBot(discord.Client):
         @app_commands.describe(
             sujet_veille="Sujet",
             langue="Langue",
-            jour="Jours",
-            nombre_article="Nombre"
+            jour="Jours (Max 30)",
+            nombre_article="Nombre (Max 50)"
         )
         @app_commands.choices(langue=[
             app_commands.Choice(name="Français", value="fr"),
