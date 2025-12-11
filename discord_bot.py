@@ -1,8 +1,11 @@
 import os
 import discord
 import json
+import re
 from discord import app_commands
 from dotenv import load_dotenv
+from bigquery_utils import insert_config_to_bigquery
+
 from veille_scraping import call_api_articles
 from conversation_agent import ConversationAgent
 
@@ -109,28 +112,69 @@ class DiscordBot(discord.Client):
             except Exception as e:
                 await interaction.followup.send(f"Erreur critique : {str(e)}")
 
+        # --- Commande /config_veille ---
+        @self.tree.command(name="config_veille", description="Configure tes préférences de veille")
+        @app_commands.describe(
+            email="Ton adresse email pour les rapports",
+            sujet="Le sujet principal de ta veille",
+            langue="Langue des articles",
+            periode="Période de recherche (jours)",
+            nb_articles="Nombre d'articles à analyser"
+        )
+        @app_commands.choices(langue=[
+            app_commands.Choice(name="Français", value="fr"),
+            app_commands.Choice(name="English", value="en")
+        ])
+        async def config_veille(
+            interaction: discord.Interaction,
+            email: str,
+            sujet: str,
+            langue: app_commands.Choice[str],
+            periode: int,
+            nb_articles: int,
+        ):
+            # 1. Validation email
+            email_pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
+            if not re.match(email_pattern, email):
+                await interaction.response.send_message(
+                    "❌ Adresse email invalide. Elle doit contenir un '@' et un domaine (ex: .com).", 
+                    ephemeral=True
+                )
+                return
+
+            # Sécurité valeur entrée
+            if periode < 1 or nb_articles < 1:
+                await interaction.response.send_message(
+                    "❌ Le nombre de jours et d'articles doit être supérieur à 0.", 
+                    ephemeral=True
+                )
+                return
+
+            await interaction.response.defer(ephemeral=True)
+
+            try:
+                user_data = {
+                    "id_discord": str(interaction.user.id),
+                    "email": email,
+                    "sujet": sujet,
+                    "langue": langue.value,
+                    "periode": periode,
+                    "nb_articles": nb_articles,
+                }
+
+                insert_config_to_bigquery(user_data) 
+
+                await interaction.followup.send(
+                    f"✅ Configuration sauvegardée pour **{sujet}** ({langue.name}) !\n"
+                    f"Rapports envoyés à : `{email}`"
+                )
+
+            except Exception as e:
+                print(f"Erreur BQ: {e}")
+                await interaction.followup.send(f"❌ Erreur lors de la sauvegarde : {str(e)}")
+
         await self.tree.sync()
         print("Commandes synchronisees.")
-
-        # --- Commande /subscribe_newsletter ---
-        @self.tree.command(name="subscribe_newsletter", description="S'abonner à la newsletter en indiquant son email")
-        @app_commands.describe(email="Votre adresse email pour recevoir la newsletter")
-        async def subscribe_newsletter(interaction: discord.Interaction, email: str):
-            await interaction.response.defer(ephemeral=True)
-            try:
-                fichier_email = "adresses_mail.txt"
-                emails_existants = set()
-                if os.path.exists(fichier_email):
-                    with open(fichier_email, "r", encoding="utf-8") as f:
-                        emails_existants = set(l.strip() for l in f.readlines())
-                if email in emails_existants:
-                    await interaction.followup.send("⚠️ Cette adresse est déjà inscrite à la newsletter.")
-                    return
-                with open(fichier_email, "a", encoding="utf-8") as f:
-                    f.write(email + "\n")
-                await interaction.followup.send(f"✅ Adresse {email} ajoutée à la newsletter !")
-            except Exception as e:
-                await interaction.followup.send(f"❌ Une erreur est survenue : {e}")
 
     async def on_ready(self):
         print(f'Connecte : {self.user}')
