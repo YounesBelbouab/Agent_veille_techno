@@ -39,8 +39,8 @@ class DiscordBot(discord.Client):
         @app_commands.describe(
             sujet_veille="Sujet",
             langue="Langue",
-            jour="Jours",
-            nombre_article="Nombre"
+            jour="Jours (Max 30)",
+            nombre_article="Nombre (Max 50)"
         )
         @app_commands.choices(langue=[
             app_commands.Choice(name="Français", value="fr"),
@@ -53,8 +53,33 @@ class DiscordBot(discord.Client):
                 jour: int,
                 nombre_article: int
         ):
-            if jour < 1 or nombre_article < 1:
-                await interaction.response.send_message("Erreur paramètres", ephemeral=True)
+
+            if jour > 30:
+                await interaction.response.send_message(
+                    "Erreur Temporelle: Impossible de remonter plus de 30 jours en arrière (Limite API).",
+                    ephemeral=True
+                )
+                return
+
+            if jour < 1:
+                await interaction.response.send_message(
+                    "Erreur: Le nombre de jours doit être au moins 1.",
+                    ephemeral=True
+                )
+                return
+
+            if nombre_article > 50:
+                await interaction.response.send_message(
+                    "Surcharge : Je ne traite pas plus de 50 articles à la fois. Réduis ta demande.",
+                    ephemeral=True
+                )
+                return
+
+            if nombre_article < 1:
+                await interaction.response.send_message(
+                    "Erreur: Il me faut au moins 1 article.",
+                    ephemeral=True
+                )
                 return
 
             await interaction.response.defer()
