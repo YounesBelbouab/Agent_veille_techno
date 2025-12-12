@@ -6,16 +6,10 @@
   <component name="ChangeListManager">
     <list default="true" id="f435391c-0f6e-4dfe-a53b-037d37c0d3f6" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/adresses_mail.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/batch_runner.py" beforeDir="false" afterPath="$PROJECT_DIR$/exec/batch_runner.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bigquery_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/exec/bigquery_utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/conversation_agent.py" beforeDir="false" afterPath="$PROJECT_DIR$/agents/conversation_agent.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/agents/conversation_agent.py" beforeDir="false" afterPath="$PROJECT_DIR$/agents/conversation_agent.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/discord_bot.py" beforeDir="false" afterPath="$PROJECT_DIR$/discord_bot.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rating_agent.py" beforeDir="false" afterPath="$PROJECT_DIR$/agents/rating_agent.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/veille_scraping.py" beforeDir="false" afterPath="$PROJECT_DIR$/agents/veille_scraping.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/veille_tech.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/veille_tech_semaine.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/exec/batch_runner.py" beforeDir="false" afterPath="$PROJECT_DIR$/exec/batch_runner.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/exec/bigquery_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/bigquery_utils.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -67,6 +61,7 @@
 }</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\Belbouab\Desktop\dia3\Python\Agent_veille_techno" />
       <recent name="C:\Users\Belbouab\Desktop\dia3\Python\Agent_veille_techno\exec" />
       <recent name="C:\Users\Belbouab\Desktop\dia3\Python\Agent_veille_techno\utils" />
       <recent name="C:\Users\Belbouab\Desktop\dia3\Python\Agent_veille_techno\agents" />

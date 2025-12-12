@@ -7,8 +7,8 @@ from dotenv import load_dotenv
 import asyncio
 from email.message import EmailMessage
 from bigquery_utils import extract_configs_from_bigquery
-from rating_agent import SortAgent
-from conversation_agent import ConversationAgent
+from agents.rating_agent import SortAgent
+from agents.conversation_agent import ConversationAgent
 # from discord_bot import send_veille_discord
 
 KEYWORDS_DATA_IA_CYBER = [
