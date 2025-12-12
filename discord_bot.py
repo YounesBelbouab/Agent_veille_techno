@@ -8,10 +8,12 @@ import asyncio
 from aiohttp import web
 from discord import app_commands
 from dotenv import load_dotenv
+from bigquery_utils import insert_config_to_bigquery
 
 from bigquery_utils import insert_config_to_bigquery
 from agents.veille_scraping import call_api_articles
 from agents.conversation_agent import ConversationAgent
+from exec.batch_runner import run_batch
 from exec.batch_runner import run_batch
 
 MODEL_ID = "llama-3.3-70b-versatile"
@@ -31,7 +33,7 @@ class DiscordBot(discord.Client):
     async def send_long_message(self, interaction: discord.Interaction, content: str, use_followup=False):
         chunks = [content[i:i + 1990] for i in range(0, len(content), 1990)]
         if target_channel is None:
-            print(f"❌ Erreur : Impossible de trouver le salon {TARGET_CHANNEL_ID}")
+            print(f"Erreur : Impossible de trouver le salon {TARGET_CHANNEL_ID}")
             return
 
         for i, chunk in enumerate(chunks):
@@ -65,10 +67,10 @@ class DiscordBot(discord.Client):
                 for chunk in chunks:
                     await thread.send(chunk)
 
-            print(f"✅ Veille envoyée avec succès dans le thread '{thread.name}'")
+            print(f"Veille envoyée avec succès dans le thread '{thread.name}'")
 
         except Exception as e:
-            print(f"❌ Erreur critique lors de l'envoi de la veille : {e}")
+            print(f"Erreur critique lors de l'envoi de la veille : {e}")
 
     def validate_veille_params(self, jour: int, nombre_article: int):
         if jour > 30: return "Erreur Temporelle : Max 30 jours."
