@@ -4,6 +4,8 @@ import json
 import re
 import datetime
 import asyncio
+
+from aiohttp import web
 from discord import app_commands
 from dotenv import load_dotenv
 
@@ -28,6 +30,9 @@ class DiscordBot(discord.Client):
 
     async def send_long_message(self, interaction: discord.Interaction, content: str, use_followup=False):
         chunks = [content[i:i + 1990] for i in range(0, len(content), 1990)]
+        if target_channel is None:
+            print(f"❌ Erreur : Impossible de trouver le salon {TARGET_CHANNEL_ID}")
+            return
 
         for i, chunk in enumerate(chunks):
             if i == 0 and use_followup:
@@ -36,6 +41,34 @@ class DiscordBot(discord.Client):
                 await interaction.channel.send(chunk)
             else:
                 await interaction.channel.send(chunk)
+        try:
+            try:
+                user_obj = await self.fetch_user(int(user_id))
+                user_name = user_obj.name
+            except:
+                user_name = user_id
+
+            date_str = datetime.datetime.now().strftime("%d/%m/%Y")
+
+            thread = await target_channel.create_thread(
+                name=f"Veille de {user_name} du {date_str}",
+                type=discord.ChannelType.public_thread,
+                auto_archive_duration=60
+            )
+
+            full_message = f"Hey <@{user_id}> voici ta veille du {date_str} ! \n\n{veille_user}"
+
+            if len(full_message) <= 2000:
+                await thread.send(full_message)
+            else:
+                chunks = [full_message[i:i+1900] for i in range(0, len(full_message), 1900)]
+                for chunk in chunks:
+                    await thread.send(chunk)
+
+            print(f"✅ Veille envoyée avec succès dans le thread '{thread.name}'")
+
+        except Exception as e:
+            print(f"❌ Erreur critique lors de l'envoi de la veille : {e}")
 
     def validate_veille_params(self, jour: int, nombre_article: int):
         if jour > 30: return "Erreur Temporelle : Max 30 jours."
@@ -134,6 +167,21 @@ class DiscordBot(discord.Client):
             await interaction.followup.send("Batch Automation termine.")
         except Exception as e:
             await interaction.followup.send(f"Erreur batch : {e}")
+        @self.tree.command(name="run_veille_automation", description="Lancer manuellement le batch de veille")
+        async def run_veille_automation(interaction: discord.Interaction):
+            # 1. On dit à Discord de patienter (car le batch peut prendre 5 min)
+            await interaction.response.defer()
+            await interaction.followup.send("🚀 Démarrage du Batch Automation en cours...")
+
+            try:
+                await run_batch(bot_client=self)
+
+                await interaction.followup.send("✅ Batch Automation terminé avec succès.")
+
+            except Exception as e:
+                # On envoie l'erreur s'il y en a une
+                await interaction.followup.send(f"❌ Erreur critique batch : {e}")
+
 
     async def send_veille_discord(self, user_id, veille_user):
         target_channel = self.get_channel(TARGET_CHANNEL_ID)
@@ -183,6 +231,28 @@ class DiscordBot(discord.Client):
 
         await self.tree.sync()
         print("Commandes synchronisees.")
+        self.loop.create_task(self.start_web_server())
+
+    async def trigger_cron_handler(self, request):
+            print("Cron activé! Lancement du batch...")
+            asyncio.create_task(run_batch(bot_client=self))
+            return web.Response(text="Batch démarré avec succès !")
+
+    async def start_web_server(self):
+        app = web.Application()
+        app.router.add_get('/trigger_veille', self.trigger_cron_handler)
+
+        runner = web.AppRunner(app)
+        await runner.setup()
+
+        port = int(os.environ.get("PORT", 8080))
+
+        site = web.TCPSite(runner, '0.0.0.0', port)
+        await site.start()
+        print(f"Serveur Web de veille démarré sur le port {port}")
+
+    async def on_ready(self):
+        print(f'Connecte : {self.user}')
 
 
 if __name__ == "__main__":

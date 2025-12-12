@@ -15,6 +15,15 @@ def get_sa_credentials(service_account):
     response = client.access_secret_version(request={"name": name})
     return response.payload.data.decode("UTF-8")
 
+# def get_sa_credentials(service_account):
+#     if os.getenv("ENV") == "LOCAL":
+#         with open("google_credentials.json", "r") as f:
+#             return f.read()
+
+#     client = secretmanager.SecretManagerServiceClient()
+#     name = f"projects/{PROJECT_ID}/secrets/{service_account}/versions/latest"
+#     response = client.access_secret_version(request={"name": name})
+#     return response.payload.data.decode("UTF-8")
 
 def get_bq_client():
     service_account_veille = get_sa_credentials("veille-automation")

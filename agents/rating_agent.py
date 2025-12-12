@@ -9,7 +9,7 @@ class SortAgent:
     def __init__(self):
         load_dotenv()
         self.api_key = os.getenv("API_KEY_NEW_API")
-        self.POOL_SIZE = 50
+        self.POOL_SIZE = 30
 
         self.noise_keywords = [
             "salaire", "salary", "salaries", "compensation", "remuneration", "rémunération", "pay",
