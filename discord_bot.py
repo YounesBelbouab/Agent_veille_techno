@@ -9,10 +9,10 @@ from aiohttp import web
 from discord import app_commands
 from dotenv import load_dotenv
 
-from utils.bigquery_utils import insert_config_to_bigquery
+from bigquery_utils import insert_config_to_bigquery
 from agents.veille_scraping import call_api_articles
 from agents.conversation_agent import ConversationAgent
-from batch_runner import run_batch
+from exec.batch_runner import run_batch
 
 MODEL_ID = "llama-3.3-70b-versatile"
 TARGET_CHANNEL_ID = 1448667313921331252
@@ -163,7 +163,7 @@ class DiscordBot(discord.Client):
         await interaction.response.defer()
         await interaction.followup.send("Demarrage du Batch Automation...")
         try:
-            await asyncio.to_thread(run_batch)
+            await asyncio.to_thread(run_batch, self)
             await interaction.followup.send("Batch Automation termine.")
         except Exception as e:
             await interaction.followup.send(f"Erreur batch : {e}")

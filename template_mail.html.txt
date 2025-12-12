@@ -1,0 +1,139 @@
+```<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Newsletter</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    background: #f5f6fa;
+    font-family: Arial, sans-serif;
+  }
+  .container {
+    width: 100%;
+    max-width: 640px;
+    margin: auto;
+    background: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .header {
+    background-image: url('https://i.imgur.com/fHhzQfW.png'); /* dégradé violet → bleu */
+    background-size: cover;
+    background-position: center;
+    padding: 50px 20px;
+    text-align: center;
+    color: #ffffff;
+  }
+  .header h1 {
+    margin: 0;
+    font-size: 32px;
+    font-weight: bold;
+  }
+  .header p {
+    margin-top: 8px;
+    font-size: 16px;
+    opacity: 0.9;
+  }
+  .section-title {
+    font-size: 22px;
+    margin: 30px 20px 10px;
+    font-weight: bold;
+    color: #333;
+  }
+  .article {
+    margin: 0 20px 20px;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #e6e6e6;
+  }
+  .article-title {
+    font-size: 18px;
+    margin: 0;
+    font-weight: bold;
+    color: #2c3e50;
+  }
+  .article-summary {
+    margin-top: 8px;
+    font-size: 14px;
+    color: #555;
+  }
+  .article-link a {
+    display: inline-block;
+    margin-top: 10px;
+    color: #5e72e4;
+    font-weight: bold;
+    text-decoration: none;
+  }
+  .stats {
+    background: #fcfcfc;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    text-align: center;
+  }
+  .stat {
+    width: 33%;
+  }
+  .stat-number {
+    font-size: 20px;
+    font-weight: bold;
+    color: #2c3e50;
+  }
+  .stat-label {
+    font-size: 12px;
+    color: #666;
+  }
+  .footer {
+    padding: 20px;
+    text-align: center;
+    font-size: 12px;
+    color: #999;
+  }
+
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <h1>{{ newsletter_title }}</h1>
+    <p>{{ newsletter_subtitle }}</p>
+  </div>
+
+  <!-- ARTICLES -->
+  <div class="section-title">Dernières actualités</div>
+  {{ articles }}
+
+  <!-- STATS SECTION -->
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-number">{{ stat1 }}</div>
+      <div class="stat-label">Lecteurs</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number">{{ stat2 }}</div>
+      <div class="stat-label">Temps moyen</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number">{{ stat3 }}</div>
+      <div class="stat-label">Articles</div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    {{ footer_note }}<br>
+    Vous recevez cette veille automatiquement.
+  </div>
+
+</div>
+
+</body>
+</html>
+```
