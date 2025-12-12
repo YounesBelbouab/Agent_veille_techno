@@ -59,6 +59,6 @@ Les préférences des utilisateurs (Sujets de veille, fréquence, langue, canal 
 
 ## 👤 Auteur
 
-Projet développé par **Kylian**, **Leopold**, **Paul**, **Yassine**, **Younes** (et Jarvis).
+Projet développé par **Kylian**, **Léopold**, **Paul**, **Yassine**, **Younes** (et Jarvis).
 
 > *"La Data c'est le pouvoir, ne laisse pas traîner ça."* — Jarvis
