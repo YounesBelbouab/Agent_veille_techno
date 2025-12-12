@@ -1,7 +1,7 @@
-import requests
-import trafilatura
 import os
 from datetime import datetime, timedelta
+import requests
+import trafilatura
 from dotenv import load_dotenv
 
 
@@ -47,7 +47,6 @@ class SortAgent:
         query_formatted = query_string.replace(" ", "%20").replace('"', '%22')
 
         target_languages = {lang, "en"}
-
         all_articles = []
 
         print(f"SortAgent : Recherche API sur les langues {target_languages}...")
@@ -67,13 +66,11 @@ class SortAgent:
                 response = requests.get(url)
                 if response.status_code == 200:
                     data = response.json()
-                    articles = data.get("articles", [])
-                    all_articles.extend(articles)
+                    all_articles.extend(data.get("articles", []))
             except Exception as e:
                 print(f"Erreur API pour la langue {l} : {e}")
 
         unique_articles = {art['url']: art for art in all_articles}.values()
-
         return list(unique_articles)
 
     def pertinence_score_calcul(self, article, content, keywords_list, vocab_tech=None):
@@ -99,7 +96,6 @@ class SortAgent:
             for tech_word in vocab_tech:
                 if tech_word.lower() in content_lower:
                     tech_hits += 1
-
             score += min(tech_hits * 2, 30)
 
         if len(content) < 500:
@@ -107,7 +103,7 @@ class SortAgent:
         elif len(content) > 3000:
             score += 5
 
-        source_name = article['source']['name']
+        source_name = article.get('source', {}).get('name', '')
         if source_name and any(s.lower() in source_name.lower() for s in self.reliable_sources):
             score += 15
 
@@ -123,10 +119,9 @@ class SortAgent:
             return []
 
         processed_articles = []
-
         print(f"SortAgent : Analyse et Scoring de {len(raw_articles)} articles en cours...")
 
-        for i, article in enumerate(raw_articles):
+        for article in raw_articles:
             try:
                 downloaded = trafilatura.fetch_url(article["url"])
                 content = trafilatura.extract(downloaded) if downloaded else ""
@@ -150,14 +145,12 @@ class SortAgent:
                 processed_articles.append(article_data)
 
         sorted_list = sorted(processed_articles, key=lambda x: x['relevance_score'], reverse=True)
-
         final_selection = sorted_list[:top_k]
-        print(final_selection)
+
         print(f"SortAgent : {len(final_selection)} articles qualifies retenus sur {len(raw_articles)}.")
         return final_selection
 
 
 if __name__ == "__main__":
     agent = SortAgent()
-    # Test sans liste technique
     agent.get_sorted_articles(keywords_list=["Data"], days=1, top_k=1)

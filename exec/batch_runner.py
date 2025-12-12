@@ -5,21 +5,20 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
 
-from bigquery_utils import extract_configs_from_bigquery
-from rating_agent import SortAgent
-from conversation_agent import ConversationAgent
+from utils.bigquery_utils import extract_configs_from_bigquery
+from agents.rating_agent import SortAgent
+from agents.conversation_agent import ConversationAgent
 
-KEYWORDS_DATA_IA_CYBER = [
+keywords = [
     "Big Data", "ETL", "ELT", "Data Pipeline", "Data Lake", "Data Warehouse",
     "Data Governance", "Data Quality", "Apache Spark", "PySpark", "Databricks",
     "Apache Kafka", "Airflow", "dbt", "Snowflake", "BigQuery", "Artificial Intelligence",
     "Machine Learning", "Deep Learning", "NLP", "Generative AI", "LLM",
     "TensorFlow", "PyTorch", "Hugging Face", "AWS", "Azure", "Google Cloud",
-    "Cybersecurity", "Zero Trust", "DevSecOps"
+    "Cybersecurity", "Zero Trust", "DevSecOps", "ChatGPT", "DeepSeek", "Gemini", "ClaudeIA",
 ]
 
 MODEL_ID = "llama-3.3-70b-versatile"
-
 
 def send_newsletters(mail_user, veille_user):
     sender_email = os.getenv("SMTP_EMAIL")
@@ -47,7 +46,6 @@ def send_newsletters(mail_user, veille_user):
     except Exception as e:
         print(f"Erreur envoi mail a {mail_user} : {e}")
 
-
 def send_discord(id_user, veille_user):
     token = os.getenv("DISCORD_TOKEN")
     if not token:
@@ -72,7 +70,6 @@ def send_discord(id_user, veille_user):
         requests.post(f"{base_url}/channels/{channel_id}/messages", headers=headers, json=msg_payload)
 
     print(f"Message Discord envoye a {id_user}")
-
 
 def generate_rapport_ia(articles, conv_agent):
     if not articles:
@@ -99,7 +96,6 @@ def generate_rapport_ia(articles, conv_agent):
             rapport_final += f"Erreur analyse IA : {article['title']}\n\n"
 
     return rapport_final
-
 
 def run_batch():
     load_dotenv()
@@ -129,7 +125,7 @@ def run_batch():
                 days=user['periode'],
                 max_raw=50,
                 top_k=user['nb_articles'],
-                tech_vocabulary=KEYWORDS_DATA_IA_CYBER
+                tech_vocabulary=keywords
             )
         except Exception as e:
             print(f"Erreur SortAgent : {e}")
@@ -148,7 +144,6 @@ def run_batch():
             send_discord(user['id_discord'], veille_user)
 
     print("\nBatch termine.")
-
 
 if __name__ == "__main__":
     run_batch()

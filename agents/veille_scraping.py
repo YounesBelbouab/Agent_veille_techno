@@ -1,4 +1,4 @@
-from rating_agent import SortAgent
+from agents.rating_agent import SortAgent
 
 mot_cle_veille = [
     "Big Data", "ETL", "ELT", "Data Pipeline", "Data Lake", "Data Warehouse",

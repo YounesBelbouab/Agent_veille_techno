@@ -18,7 +18,7 @@ class ConversationAgent:
         self.history = [
             {
                 "role": "system",
-                "content": ConversationAgent.read_file("./context.txt")
+                "content": ConversationAgent.read_file("../context.txt")
             }]
 
     def update_history(self, role, content):
