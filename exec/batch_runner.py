@@ -30,30 +30,55 @@ def send_newsletter(email_user, veille_content, subject="Newsletter Technologiqu
     smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com")
     smtp_port = int(os.getenv("SMTP_PORT", 465))
 
-    html_content = generate_newsletter_html(veille_content)
-
-    try:
-        with open("template_mail.html", "r", encoding="utf-8") as f:
-            html_template = f.read()
-    except FileNotFoundError:
-        print("Erreur : Le fichier template_mail.html est introuvable.")
+    # --- ÉTAPE CRUCIALE : NETTOYAGE DES DONNÉES ---
+    # Si veille_content est une chaîne de caractères (comme dans votre exemple), on la convertit en liste
+    articles_data = []
+    
+    if isinstance(veille_content, str):
+        try:
+            # ast.literal_eval est parfait pour votre format (avec des simple quotes 'title')
+            articles_data = ast.literal_eval(veille_content)
+        except Exception as e:
+            print(f"⚠️ Erreur de parsing (le contenu restera brut) : {e}")
+            # En cas d'erreur, on ne pourra pas faire de HTML joli, on laisse tomber ou on gère autrement
+            return 
+    elif isinstance(veille_content, list):
+        articles_data = veille_content
+    else:
+        print("❌ Format de données inconnu pour la newsletter.")
         return
-    
-    
+
+    # --- GÉNÉRATION HTML ---
+    # Maintenant on est sûr que articles_data est une liste, on peut appeler votre générateur
+    try:
+        html_body = generate_newsletter_html(articles_data)
+    except Exception as e:
+        print(f"❌ Erreur HTML : {e}")
+        return
+
+    # --- CRÉATION DU MAIL ---
     msg = EmailMessage()
-    msg["From"] = f"No-Reply <{email_address}>"
+    msg["From"] = f"Jarvis Veille <{email_address}>"
     msg["To"] = email_user
     msg["Subject"] = subject
 
-    msg.set_content(veille_content)
+    text_fallback = "Voici votre veille tech :\n\n"
+    for art in articles_data:
+        titre = art.get('title', 'Sans titre')
+        url = art.get('url', '#')
+        text_fallback += f"- {titre} : {url}\n"
+    
+    msg.set_content(text_fallback)
+
+    msg.add_alternative(html_body, subtype='html')
 
     try:
         with smtplib.SMTP_SSL(smtp_host, smtp_port) as smtp:
             smtp.login(email_address, email_password)
             smtp.send_message(msg)
-        print(f"Email envoyé à {email_user} avec succès !")
+        print(f"✅ Email envoyé à {email_user} avec succès !")
     except Exception as e:
-        print(f"Erreur lors de l'envoi à {email_user} : {e}")
+        print(f"❌ Erreur lors de l'envoi à {email_user} : {e}")
 
 
 # def send_private_discord(id_user, veille_user):
@@ -158,7 +183,7 @@ async def run_batch(bot_client):
         veille_user = await asyncio.to_thread(generate_rapport_ia, articles, conv_agent)
 
         if user.get('email') and "@" in user['email']:
-            send_newsletter(user['email'], veille_user)
+            send_newsletter(user['email'], articles, subject=f"Veille : {user['sujet']}")
 
         if user.get('id_discord'):
             print(f"📨 Envoi à {user['id_discord']}")
