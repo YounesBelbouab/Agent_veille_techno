@@ -37,7 +37,7 @@ class SortAgent:
             "Krebs on Security", "BleepingComputer", "The Hacker News", "Dark Reading", "Hacker News",
             "Reddit r/MachineLearning", "Reddit r/DataEngineering", "Reddit r/datascience", "Lobsters",
             "Stack Overflow Blog", "Next INpact", "L’Usine Digitale", "Les Numériques", "Frandroid",
-            "Le Big Data", "Actu IA", "Siècle Digital", "Bdm"
+            "Le Big Data", "Actu IA", "Siècle Digital", "Bdm, ArXive"
         ]
 
     def fetch_from_api(self, keywords_list, lang, days, max_results):
